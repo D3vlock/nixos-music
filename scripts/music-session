@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+tmux new-session -d -s music
+
+tmux send-keys -t music "sclang" C-m
+tmux split-window -h
+tmux send-keys "tidal" C-m
+
+tmux attach -t music
