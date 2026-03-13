@@ -25,6 +25,9 @@ ln -sf "$REPO_DIR/scripts/tidal.hs" \
 ln -sf "$REPO_DIR/tmux/tmux.conf" \
     "$USER_HOME/.tmux.conf"
 
+ln -sf "$REPO_DIR/scripts/music-session" \
+    "$USER_HOME/music-session"
+
 chown -h "$USER_NAME:$USER_NAME" "$USER_HOME/.config/SuperCollider/startup.scd" || true
 chown -h "$USER_NAME:$USER_NAME" "$USER_HOME/tidal.hs" || true
 chown -h "$USER_NAME:$USER_NAME" "$USER_HOME/.tmux.conf" || true

@@ -14,6 +14,7 @@
   users.users.artist = {
     isNormalUser = true;
     extraGroups = [ "wheel" "audio" "networkmanager" ];
+    shell = pkgs.zsh;
   };
 
   security.sudo.enable = true;
@@ -33,6 +34,8 @@
   };
 
   services.pulseaudio.enable = false;
+
+  hardware.bluetooth.enable = true;
 
   services.pipewire = {
     enable = true;
@@ -61,14 +64,38 @@
     ];
   };
 
+  programs.sway.enable = true;
+  programs.tmux = {
+    enable = true;
+    extraConfig = ''
+        set -g default-shell ${pkgs.zsh}/bin/zsh
+        set -g default-command ${pkgs.zsh}/bin/zsh
+    '';
+  };
+
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd sway";
+        user = "greeter";
+      };
+    };
+  };
+
   environment.systemPackages = with pkgs; [
+    foot
     git
     vim
     neovim
+    starship
+    fzf
     ripgrep
     tmux
     bluez
     nodejs
+    qpwgraph
+    qutebrowser
 
     supercollider
     supercolliderPlugins.sc3-plugins
@@ -78,12 +105,24 @@
   ];
 
   environment.sessionVariables = {
-    QT_QPA_PLATFORM = "minimal";
+    TERM = "foot";
   };
 
   environment.shellAliases = {
   tidal = "ghci -ghci-script ~/tidal.hs";
   };
+
+  environment.etc."foot/foot.init".text = ''
+    [main]
+    shell=${pkgs.zsh}/bin/zsh
+    font=JetBrainsMono Nerd Font:size=16
+  '';
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    noto-fonts
+    noto-fonts-color-emoji
+  ];
 
   systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
 
