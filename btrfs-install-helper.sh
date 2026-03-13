@@ -8,6 +8,7 @@ if [[ "${EUID}" -ne 0 ]]; then
     echo "Please run as root."
     exit 1
 fi
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 TARGET_DISK=""
 EFI_PART=""
@@ -15,7 +16,7 @@ BTRFS_PART=""
 SWAP_SIZE_GB=""
 HOSTNAME_CHOICE=""
 USERNAME_CHOICE=""
-TIMEZONE_CHOICE="Europe/Brussels"
+TIMEZONE_CHOICE=""
 
 ROOT_SUBVOL="root"
 HOME_SUBVOL="home"
@@ -27,9 +28,9 @@ BTRFS_MOUNT_OPTS_HOME="compress=zstd,subvol=${HOME_SUBVOL}"
 BTRFS_MOUNT_OPTS_NIX="compress=zstd,noatime,subvol=${NIX_SUBVOL}"
 BTRFS_MOUNT_OPTS_SWAP="subvol=${SWAP_SUBVOL}"
 
-pause() {
-    read -r -p "Press Enter to continue..."
-}
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 ask_yes_no() {
     local prompt="$1"
@@ -78,6 +79,42 @@ confirm_or_exit() {
     fi
 }
 
+teardown() {
+    echo
+    echo "Tearing down mounts..."
+    swapoff /mnt/.swapvol/swapfile 2>/dev/null || true
+    umount /mnt/boot 2>/dev/null || true
+    umount /mnt/.swapvol 2>/dev/null || true
+    umount /mnt/nix 2>/dev/null || true
+    umount /mnt/home 2>/dev/null || true
+    umount /mnt 2>/dev/null || true
+}
+
+# ---------------------------------------------------------------------------
+# Cleanup trap — unmounts /mnt subtree on unexpected exit
+# ---------------------------------------------------------------------------
+
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        echo
+        echo "Script failed (exit $exit_code). Attempting to clean up mounts..."
+        swapoff /mnt/.swapvol/swapfile 2>/dev/null || true
+        # Unmount in reverse order; ignore errors since some may not be mounted
+        umount /mnt/boot 2>/dev/null || true
+        umount /mnt/.swapvol 2>/dev/null || true
+        umount /mnt/nix 2>/dev/null || true
+        umount /mnt/home 2>/dev/null || true
+        umount /mnt 2>/dev/null || true
+        echo "Cleanup done. You can safely re-run the script."
+    fi
+}
+trap cleanup EXIT
+
+# ---------------------------------------------------------------------------
+# Disk selection
+# ---------------------------------------------------------------------------
+
 show_disks() {
     echo
     echo "Available block devices:"
@@ -94,6 +131,8 @@ pick_disk() {
     fi
 }
 
+# Sets EFI_PART and BTRFS_PART based on TARGET_DISK naming convention.
+# Must be called after TARGET_DISK is set.
 detect_part_names() {
     if [[ "$TARGET_DISK" =~ nvme|mmcblk ]]; then
         EFI_PART="${TARGET_DISK}p1"
@@ -104,9 +143,13 @@ detect_part_names() {
     fi
 }
 
+# ---------------------------------------------------------------------------
+# Settings gathering
+# ---------------------------------------------------------------------------
+
 choose_swap_size() {
     local picked
-    choose_menu picked "Select swapfile size" \
+    choose_menu picked "Select swapfile size (GiB)" \
         "4" \
         "8" \
         "16" \
@@ -124,16 +167,42 @@ choose_swap_size() {
     fi
 }
 
+validate_timezone() {
+    local tz="$1"
+    if [[ ! -f "/etc/zoneinfo/$tz" ]]; then
+        echo "Unknown timezone: $tz"
+        echo "Check /etc/zoneinfo for valid options."
+        exit 1
+    fi
+}
+
 get_basic_settings() {
     read -r -p "Hostname [nixos-music]: " HOSTNAME_CHOICE
     HOSTNAME_CHOICE="${HOSTNAME_CHOICE:-nixos-music}"
 
+    # Hostnames: lowercase letters, digits, hyphens; no leading/trailing hyphen
+    if [[ ! "$HOSTNAME_CHOICE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+        echo "Invalid hostname: $HOSTNAME_CHOICE"
+        exit 1
+    fi
+
     read -r -p "Primary username [artist]: " USERNAME_CHOICE
     USERNAME_CHOICE="${USERNAME_CHOICE:-artist}"
 
+    # POSIX username: starts with letter/underscore, alphanumeric/hyphen/underscore
+    if [[ ! "$USERNAME_CHOICE" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        echo "Invalid username: $USERNAME_CHOICE"
+        exit 1
+    fi
+
     read -r -p "Timezone [Europe/Brussels]: " TIMEZONE_CHOICE
     TIMEZONE_CHOICE="${TIMEZONE_CHOICE:-Europe/Brussels}"
+    validate_timezone "$TIMEZONE_CHOICE"
 }
+
+# ---------------------------------------------------------------------------
+# Disk operations
+# ---------------------------------------------------------------------------
 
 wipe_and_partition() {
     echo
@@ -155,6 +224,7 @@ wipe_and_partition() {
     partprobe "$TARGET_DISK"
     udevadm settle
 
+    # Derive partition names now that they actually exist
     detect_part_names
 
     echo
@@ -173,7 +243,6 @@ format_partitions() {
 create_subvolumes() {
     echo
     echo "Creating Btrfs subvolumes..."
-    mkdir -p /mnt
     mount "$BTRFS_PART" /mnt
 
     btrfs subvolume create "/mnt/${ROOT_SUBVOL}"
@@ -189,10 +258,7 @@ mount_layout() {
     echo "Mounting target layout..."
     mount -o "$BTRFS_MOUNT_OPTS_ROOT" "$BTRFS_PART" /mnt
 
-    mkdir -p /mnt/home
-    mkdir -p /mnt/nix
-    mkdir -p /mnt/.swapvol
-    mkdir -p /mnt/boot
+    mkdir -p /mnt/{home,nix,.swapvol,boot}
 
     mount -o "$BTRFS_MOUNT_OPTS_HOME" "$BTRFS_PART" /mnt/home
     mount -o "$BTRFS_MOUNT_OPTS_NIX" "$BTRFS_PART" /mnt/nix
@@ -215,60 +281,49 @@ create_swapfile() {
     swapon "$swapfile"
 }
 
+# ---------------------------------------------------------------------------
+# NixOS config generation
+# ---------------------------------------------------------------------------
+
 generate_config() {
     echo
-    echo "Generating NixOS config..."
+    echo "Generating NixOS hardware config..."
     nixos-generate-config --root /mnt
 }
 
-patch_configuration() {
-    local cfg="/mnt/etc/nixos/configuration.nix"
+copy_configuration() {
+    local src="${REPO_DIR}/configuration.nix"
+    local dest="/mnt/etc/nixos/configuration.nix"
 
+    if [[ ! -f "$src" ]]; then
+        echo "  [skip] No configuration.nix found in repo, using generated one"
+        return 0
+    fi
+
+    cp "$src" "$dest"
+    echo "  [copy] $src -> $dest"
+}
+
+set_user_password() {
     echo
-    echo "Applying a small minimal configuration..."
-    cp "$cfg" "${cfg}.bak"
-
-    cat >"$cfg" <<EOF
-{ config, pkgs, ... }:
-
-{
-  imports = [
-    ./hardware-configuration.nix
-  ];
-
-  networking.hostName = "${HOSTNAME_CHOICE}";
-  time.timeZone = "${TIMEZONE_CHOICE}";
-
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  networking.networkmanager.enable = true;
-
-  users.users.${USERNAME_CHOICE} = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
-  };
-
-  security.sudo.enable = true;
-
-  environment.systemPackages = with pkgs; [
-    git
-    vim
-  ];
-
-  system.stateVersion = "25.05";
+    echo "Set password for '${USERNAME_CHOICE}':"
+    nixos-enter --root /mnt -- passwd "${USERNAME_CHOICE}"
 }
-EOF
-}
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
 
 show_summary() {
     echo
-    echo "Done."
+    echo "================================================================"
+    echo " Installation complete."
+    echo "================================================================"
     echo
     echo "Disk layout:"
     lsblk -f "$TARGET_DISK"
     echo
-    echo "Mounted filesystems:"
+    echo "Mounted filesystems under /mnt:"
     findmnt /mnt
     echo
     echo "Swap:"
@@ -278,25 +333,38 @@ show_summary() {
     echo "  /mnt/etc/nixos/configuration.nix"
     echo "  /mnt/etc/nixos/hardware-configuration.nix"
     echo
-    echo "Next suggested steps:"
+    echo "Next steps:"
     echo "  1) Review /mnt/etc/nixos/hardware-configuration.nix"
+    echo "     Ensure its fileSystems entries don't conflict with"
+    echo "     the ones written into configuration.nix by this script."
     echo "  2) Review /mnt/etc/nixos/configuration.nix"
     echo "  3) Reboot"
-    echo "  4) As root do passwd <user>"
+    echo "  4) Set a password: passwd ${USERNAME_CHOICE}"
+    echo
+    echo "  Hibernate note: if you want suspend-to-disk, see the"
+    echo "  resume_offset comment in configuration.nix."
 }
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 main() {
     echo "NixOS Btrfs Manual Install Helper"
-    echo "UEFI, single disk, with swapfile"
+    echo "UEFI · single disk · Btrfs subvolumes · swapfile"
     echo
 
     pick_disk
-    detect_part_names
     choose_swap_size
     get_basic_settings
 
+    # Derive partition names for the summary (disk exists, names are stable)
+    detect_part_names
+
     echo
-    echo "Summary:"
+    echo "================================================================"
+    echo " Summary"
+    echo "================================================================"
     echo "  Disk:      $TARGET_DISK"
     echo "  EFI part:  $EFI_PART"
     echo "  Btrfs:     $BTRFS_PART"
@@ -306,14 +374,17 @@ main() {
     echo "  Timezone:  $TIMEZONE_CHOICE"
     confirm_or_exit "Proceed with partitioning and setup."
 
-    wipe_and_partition
+    wipe_and_partition # calls detect_part_names again after partition table exists
     format_partitions
     create_subvolumes
     mount_layout
     create_swapfile
     generate_config
-    patch_configuration
+    copy_configuration
     nixos-install
+    set_user_password
+
+    teardown
     show_summary
 }
 

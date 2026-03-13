@@ -11,84 +11,38 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  networking.networkmanager.enable = true;
+
   users.users.artist = {
     isNormalUser = true;
     extraGroups = [ "wheel" "audio" "networkmanager" ];
     shell = pkgs.zsh;
   };
 
+  # security
+  
   security.sudo.enable = true;
   security.rtkit.enable = true;
 
-  networking.networkmanager.enable = true;
-
-  services.openssh = {
-    enable = true;
-    ports = [22];
-    settings = {
-      PasswordAuthentication = true;
-      AllowUsers = null;
-      UseDns = true;
-      PermitRootLogin = "no";
-    };
-  };
-
-  services.pulseaudio.enable = false;
-
-  hardware.bluetooth.enable = true;
-
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
-  };
-
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-
-    shellAliases = {
-      ll = "ls -l";
-      edit = "sudo -e";
-      update = "sudo nixos-rebuild switch";
-    };
-
-    histSize = 10000;
-    histFile = "$HOME/.zsh_history";
-    setOptions = [
-      "HIST_IGNORE_ALL_DUPS"
-    ];
-  };
-
-  programs.sway.enable = true;
-  programs.tmux = {
-    enable = true;
-    extraConfig = ''
-        set -g default-shell ${pkgs.zsh}/bin/zsh
-        set -g default-command ${pkgs.zsh}/bin/zsh
-    '';
-  };
-
-  services.greetd = {
-    enable = true;
-    settings = {
-      default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd sway";
-        user = "greeter";
-      };
-    };
-  };
-
+  # environment
+  
   environment.systemPackages = with pkgs; [
+    (writeShellScriptBin "sway-launch" ''
+      if systemd-detect-virt --quiet && [ "$(systemd-detect-virt)" = "oracle" ]; then
+        export WLR_NO_HARDWARE_CURSORS=1
+        export WLR_RENDERER=pixman
+        exec ${pkgs.sway}/bin/sway --unsupported-gpu "$@"
+      else
+        exec ${pkgs.sway}/bin/sway "$@"
+      fi
+    '')
     foot
     git
+    stow
     vim
     neovim
     starship
+    eza
     fzf
     ripgrep
     tmux
@@ -124,7 +78,80 @@
     noto-fonts-color-emoji
   ];
 
+  # services
+  
+  services.openssh = {
+    enable = true;
+    ports = [22];
+    settings = {
+      PasswordAuthentication = false;
+      AllowUsers = [ "artist" ];
+      UseDns = true;
+      PermitRootLogin = "no";
+    };
+  };
+
+  services.pulseaudio.enable = false;
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
+
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd sway-launch";
+        user = "greeter";
+      };
+    };
+  };
+
+  # hardware
+  
+  hardware.bluetooth.enable = true;
+
+  # programs
+  
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+
+    shellAliases = {
+      switch = "sudo nixos-rebuild switch";
+    };
+
+    histSize = 10000;
+    setOptions = [
+      "HIST_IGNORE_ALL_DUPS"
+    ];
+  };
+
+  programs.sway.enable = true;
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
+
+  programs.tmux = {
+    enable = true;
+    extraConfig = ''
+        set -g default-shell ${pkgs.zsh}/bin/zsh
+        set -g default-command ${pkgs.zsh}/bin/zsh
+    '';
+  };
+
+  # greetd does not trigger the normal pipewire → wireplumber activation
+  # chain reliably. Force wireplumber into the base user session target.
   systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
 
   system.stateVersion = "25.05";
 }
+

@@ -1,29 +1,6 @@
 # 🎵 NixOS TidalCycles Music
 
-Minimal terminal-only NixOS setup for TidalCycles + SuperCollider livecoding.
-
-### Designed for
-
-    low-latency audio
-    PipeWire
-    Btrfs filesystem
-    reproducible system configuration
-    no GUI required
-
-### ✨ Features
-
-    Btrfs filesystem with subvolumes
-    swapfile on Btrfs
-    PipeWire audio
-    SuperCollider + SuperDirt
-    TidalCycles via GHC
-    minimal terminal environment
-
-### 🧰 Requirements
-
-    NixOS installer ISO
-    UEFI system
-    one target disk (will be wiped)
+NixOS setup for TidalCycles + SuperCollider livecoding with Sway.
 
 # 🚀 Installation
 
@@ -53,6 +30,7 @@ The script will:
     mount the filesystem
     generate NixOS configuration
     nixos-install
+    prompt to set new password for user
 
 ### 🛠 Finish Installation
 
@@ -71,13 +49,7 @@ reboot
 
 ### ⚙️ First Boot Setup
 
-Set the password for your user:
-
-```
-passwd <username>
-```
-
-Switch to your user with `su <username>` and clone the repo again on the new system:
+Clone the repo again on the new system:
 
 ```
 git clone https://github.com/D3vlock/nixos-music.git
@@ -96,7 +68,17 @@ Run the bootstrap script:
 sudo nixos-rebuild switch
 ```
 
+or `switch`
+
 Log out and log back in (or reboot).
+
+###  Preferred workflow
+
+Open a terminal and start the `music-session` script located in the `$HOME` folder.  
+This will open a tmux session and starts `sclang` and `tidal` in separate panes.  
+Open a new pane with `C-Space + c` and open a new file with `nvim music.tidal`.  
+Send the line to tidal with `C-Space + t` or the entire file with `C-Space + T`.
+Silence it with `C-Space + h`.
 
 ### 🎛 Start SuperCollider
 
@@ -139,7 +121,7 @@ Stop playback:
 hush
 ```
 
-🔊 Audio Tools
+### 🔊 Audio Tools
 
 Useful tools included in the system:
 
@@ -180,23 +162,3 @@ Swapfile:
 ├── tidal.hs
 └── README.md
 ```
-
-### 🔄 Updating the System
-
-After modifying configuration.nix:
-
-```
-sudo nixos-rebuild switch
-```
-
-### 📝 Notes
-
-    QT_QPA_PLATFORM=offscreen allows SuperCollider to run without a GUI.
-    SuperDirt Quarks install automatically on first run.
-    Additional sample packs can be added to:
-
-<!-- -->
-
-### 📜 License
-
-MIT (or whatever license you choose).
