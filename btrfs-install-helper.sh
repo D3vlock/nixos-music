@@ -282,6 +282,7 @@ show_summary() {
     echo "  1) Review /mnt/etc/nixos/hardware-configuration.nix"
     echo "  2) Review /mnt/etc/nixos/configuration.nix"
     echo "  3) Reboot"
+    echo "  4) As root do passwd <user>"
 }
 
 main() {
