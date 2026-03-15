@@ -72,13 +72,15 @@ or `switch`
 
 Log out and log back in (or reboot).
 
-###  Preferred workflow
+## 🎼 Preferred workflow
 
 Open a terminal and start the `music-session` script located in the `$HOME` folder.  
 This will open a tmux session and starts `sclang` and `tidal` in separate panes.  
 Open a new pane with `C-Space + c` and open a new file with `nvim music.tidal`.  
 Send the line to tidal with `C-Space + t` or the entire file with `C-Space + T`.
 Silence it with `C-Space + h`.
+
+You can use `qpwgraph` to route the sound.
 
 ### 🎛 Start SuperCollider
 
