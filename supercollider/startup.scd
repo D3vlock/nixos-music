@@ -20,7 +20,7 @@ s.reboot {
         s.sync;
         ~dirt.start(57120);
         s.latency = 0.3;
-        if(thisProcess.argv.includes("--verbose")) { ~dirt.postSampleInfo };
+        if(thisProcess.argv.includes(\"--verbose\")) { ~dirt.postSampleInfo };
 
         ~d1 = ~dirt.orbits[0];  ~d2 = ~dirt.orbits[1];
     };

@@ -19,3 +19,13 @@ vim.api.nvim_create_autocmd("BufWritePost", {
 vim.keymap.set("n", "<leader>h", function()
 	vim.fn.system("tmux send-keys -t .1 'hush' Enter")
 end)
+
+return {
+	{
+		"thgrund/tidal.nvim",
+		dependencies = { "davidgranstrom/losc" },
+		config = function()
+			require("tidal").setup()
+		end,
+	},
+}

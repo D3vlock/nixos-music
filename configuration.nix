@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
@@ -25,6 +25,10 @@
   security.rtkit.enable = true;
 
   # environment
+  #
+  nixpkgs.config.permittedInsecurePackages = [
+    "pulsar-1.129.0"
+  ];
   
   environment.systemPackages = with pkgs; [
     (writeShellScriptBin "sway-launch" ''
@@ -40,7 +44,7 @@
     git
     stow
     vim
-    neovim
+    pulsar
     starship
     eza
     fzf
@@ -132,6 +136,8 @@
       "HIST_IGNORE_ALL_DUPS"
     ];
   };
+
+  programs.neovim.enable = true;
 
   programs.sway.enable = true;
   xdg.portal = {
