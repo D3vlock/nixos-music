@@ -49,6 +49,7 @@
     nodejs
     qpwgraph
     qutebrowser
+    alsa-utils
 
     supercollider
     supercolliderPlugins.sc3-plugins
@@ -111,7 +112,7 @@
   };
 
   # hardware
-  
+
   hardware.bluetooth.enable = true;
 
   # programs
