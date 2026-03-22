@@ -72,6 +72,23 @@ or `switch`
 
 Log out and log back in (or reboot).
 
+### 🔑 SSH Key Setup
+
+Password authentication is disabled. To enable SSH access, add your public key:
+
+```
+mkdir -p ~/.ssh
+curl https://github.com/<your-username>.keys >> ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Or copy a key from another machine:
+
+```
+ssh-copy-id artist@<hostname>
+```
+
 ## 🎼 Preferred workflow
 
 Open a terminal and start the `music-session` script located in the `$HOME` folder.  
