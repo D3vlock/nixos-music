@@ -300,8 +300,21 @@ copy_configuration() {
         return 0
     fi
 
-    cp "$src" "$dest"
-    echo "  [copy] $src -> $dest"
+    # Wrap the repo config with the hardware import since configuration.nix
+    # is kept hardware-agnostic for VM testing support.
+    cat > "$dest" <<'NIXEOF'
+{ config, pkgs, lib, ... }:
+
+{
+  imports = [
+    ./hardware-configuration.nix
+    ./music-configuration.nix
+  ];
+}
+NIXEOF
+    cp "$src" "/mnt/etc/nixos/music-configuration.nix"
+    echo "  [copy] $src -> /mnt/etc/nixos/music-configuration.nix"
+    echo "  [write] wrapper -> $dest"
 }
 
 set_user_password() {

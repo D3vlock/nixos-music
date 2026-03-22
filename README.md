@@ -89,6 +89,24 @@ Or copy a key from another machine:
 ssh-copy-id artist@<hostname>
 ```
 
+## 🧪 VM Testing
+
+Test the configuration in a QEMU VM without touching your real system:
+
+```
+nix run .#vm
+```
+
+This builds and boots a VM with 4 GB RAM and 4 cores. Login with `artist` / `artist`.
+Sway runs with software rendering. Audio may not work in the VM but all services and
+packages can be verified.
+
+To just build (without running):
+
+```
+nix build .#nixosConfigurations.vm.config.system.build.vm
+```
+
 ## 🎼 Preferred workflow
 
 Open a terminal and start the `music-session` script located in the `$HOME` folder.  
@@ -177,6 +195,8 @@ Swapfile:
 ├── btrfs-install-helper.sh
 ├── bootstrap.sh
 ├── configuration.nix
+├── flake.nix
+├── vm.nix
 ├── nvim/
 │   └── lua/
 │       └── tidal.lua

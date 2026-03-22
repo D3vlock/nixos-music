@@ -71,13 +71,13 @@ safe_symlink \
     "$USER_NAME"
 
 # --- NixOS config ---
-if diff -q "$REPO_DIR/configuration.nix" /etc/nixos/configuration.nix &>/dev/null; then
+if diff -q "$REPO_DIR/configuration.nix" /etc/nixos/music-configuration.nix &>/dev/null; then
     echo "  [skip] configuration.nix unchanged"
 else
-    echo "  [copy] configuration.nix -> /etc/nixos/"
-    sudo cp "$REPO_DIR/configuration.nix" /etc/nixos/configuration.nix
+    echo "  [copy] configuration.nix -> /etc/nixos/music-configuration.nix"
+    sudo cp "$REPO_DIR/configuration.nix" /etc/nixos/music-configuration.nix
     echo "  [nixos] rebuilding..."
-    nixos-rebuild switch
+    sudo nixos-rebuild switch
 fi
 
 echo

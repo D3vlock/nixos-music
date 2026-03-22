@@ -1,10 +1,6 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
-
   networking.hostName = "tidalartist";
   time.timeZone = "Europe/Brussels";
 
