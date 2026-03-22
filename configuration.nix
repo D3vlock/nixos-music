@@ -25,11 +25,7 @@
   security.rtkit.enable = true;
 
   # environment
-  #
-  nixpkgs.config.permittedInsecurePackages = [
-    "pulsar-1.129.0"
-  ];
-  
+
   environment.systemPackages = with pkgs; [
     (writeShellScriptBin "sway-launch" ''
       if systemd-detect-virt --quiet && [ "$(systemd-detect-virt)" = "oracle" ]; then
@@ -44,7 +40,6 @@
     git
     stow
     vim
-    pulsar
     starship
     eza
     fzf
