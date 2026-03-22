@@ -175,9 +175,17 @@ Swapfile:
 ```
 .
 ├── btrfs-install-helper.sh
+├── bootstrap.sh
 ├── configuration.nix
-├── hardware-configuration.nix
-├── startup.scd
-├── tidal.hs
+├── nvim/
+│   └── lua/
+│       └── tidal.lua
+├── scripts/
+│   ├── music-session
+│   └── tidal.hs
+├── supercollider/
+│   └── startup.scd
+├── tmux/
+│   └── tmux.conf
 └── README.md
 ```
