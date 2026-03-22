@@ -2,6 +2,11 @@
 
 TIDAL_TMUX_SESSION="${TIDAL_TMUX_SESSION:-music}"
 
+if ! pw-cli info &>/dev/null; then
+    echo "PipeWire is not running. Start it before launching the music session."
+    exit 1
+fi
+
 tmux new-session -d -s "$TIDAL_TMUX_SESSION"
 
 tmux send-keys -t "$TIDAL_TMUX_SESSION" "sclang" C-m
