@@ -154,6 +154,17 @@
   # chain reliably. Force wireplumber into the base user session target.
   systemd.user.services.wireplumber.wantedBy = [ "default.target" ];
 
+  systemd.user.services.supercollider = {
+    description = "SuperCollider audio server (sclang + SuperDirt)";
+    after = [ "pipewire.service" "wireplumber.service" ];
+    requires = [ "pipewire.service" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.supercollider}/bin/sclang";
+      Restart = "on-failure";
+      RestartSec = 3;
+    };
+  };
+
   system.stateVersion = "25.05";
 }
 
