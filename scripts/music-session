@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-tmux new-session -d -s music
+TIDAL_TMUX_SESSION="${TIDAL_TMUX_SESSION:-music}"
 
-tmux send-keys -t music "sclang" C-m
-tmux split-window -h
-tmux send-keys "tidal" C-m
+tmux new-session -d -s "$TIDAL_TMUX_SESSION"
 
-tmux attach -t music
+tmux send-keys -t "$TIDAL_TMUX_SESSION" "sclang" C-m
+tmux split-window -h -t "$TIDAL_TMUX_SESSION"
+tmux send-keys -t "$TIDAL_TMUX_SESSION" "tidal" C-m
+
+tmux attach -t "$TIDAL_TMUX_SESSION"
