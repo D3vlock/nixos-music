@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${EUID}" -ne 0 ]]; then
+    echo "Please run as root (sudo)."
+    exit 1
+fi
+
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-USER_NAME="${SUDO_USER:-$USER}"
+USER_NAME="${SUDO_USER:?Run with sudo, not as root directly}"
 USER_HOME="$(getent passwd "$USER_NAME" | cut -d: -f6)"
 
 echo "Repo: $REPO_DIR"
@@ -16,9 +21,9 @@ clone_or_pull() {
     local dest="$2"
     if [ -d "$dest/.git" ]; then
         echo "  [skip] $dest already exists, pulling instead"
-        git -C "$dest" pull --ff-only
+        sudo -u "$USER_NAME" git -C "$dest" pull --ff-only
     else
-        git clone "$url" "$dest"
+        sudo -u "$USER_NAME" git clone "$url" "$dest"
     fi
 }
 
@@ -26,6 +31,10 @@ safe_symlink() {
     local src="$1"
     local dest="$2"
     local owner="$3"
+    if [ ! -e "$src" ]; then
+        echo "  [warn] source does not exist: $src"
+        return 1
+    fi
     mkdir -p "$(dirname "$dest")"
     if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
         echo "  [skip] symlink already correct: $dest"
@@ -45,7 +54,7 @@ clone_or_pull \
 if [ -d "$USER_HOME/.config/nvim" ]; then
     echo "  [skip] nvim config already exists"
 else
-    git clone https://github.com/LazyVim/starter "$USER_HOME/.config/nvim"
+    sudo -u "$USER_NAME" git clone https://github.com/LazyVim/starter "$USER_HOME/.config/nvim"
     rm -rf "$USER_HOME/.config/nvim/.git"
 fi
 

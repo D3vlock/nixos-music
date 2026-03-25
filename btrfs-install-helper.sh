@@ -99,13 +99,7 @@ cleanup() {
     if [[ $exit_code -ne 0 ]]; then
         echo
         echo "Script failed (exit $exit_code). Attempting to clean up mounts..."
-        swapoff /mnt/.swapvol/swapfile 2>/dev/null || true
-        # Unmount in reverse order; ignore errors since some may not be mounted
-        umount /mnt/boot 2>/dev/null || true
-        umount /mnt/.swapvol 2>/dev/null || true
-        umount /mnt/nix 2>/dev/null || true
-        umount /mnt/home 2>/dev/null || true
-        umount /mnt 2>/dev/null || true
+        teardown
         echo "Cleanup done. You can safely re-run the script."
     fi
 }
@@ -169,9 +163,9 @@ choose_swap_size() {
 
 validate_timezone() {
     local tz="$1"
-    if [[ ! -f "/etc/zoneinfo/$tz" ]]; then
+    if [[ ! -f "/etc/zoneinfo/$tz" && ! -f "/usr/share/zoneinfo/$tz" ]]; then
         echo "Unknown timezone: $tz"
-        echo "Check /etc/zoneinfo for valid options."
+        echo "Check /usr/share/zoneinfo or /etc/zoneinfo for valid options."
         exit 1
     fi
 }
@@ -238,6 +232,7 @@ format_partitions() {
     echo "Formatting partitions..."
     mkfs.fat -F 32 "$EFI_PART"
     mkfs.btrfs -f "$BTRFS_PART"
+    udevadm settle
 }
 
 create_subvolumes() {
@@ -313,14 +308,27 @@ copy_configuration() {
 }
 NIXEOF
     cp "$src" "/mnt/etc/nixos/music-configuration.nix"
+
+    # Substitute gathered settings into the copied config
+    sed -i \
+        -e "s|networking.hostName = \"[^\"]*\"|networking.hostName = \"${HOSTNAME_CHOICE}\"|" \
+        -e "s|time.timeZone = \"[^\"]*\"|time.timeZone = \"${TIMEZONE_CHOICE}\"|" \
+        -e "s|users.users.[a-z_][a-z0-9_-]* =|users.users.${USERNAME_CHOICE} =|" \
+        -e "s|AllowUsers = \\[ \"[^\"]*\" \\]|AllowUsers = [ \"${USERNAME_CHOICE}\" ]|" \
+        "/mnt/etc/nixos/music-configuration.nix"
+
     echo "  [copy] $src -> /mnt/etc/nixos/music-configuration.nix"
+    echo "  [conf] hostname=${HOSTNAME_CHOICE} user=${USERNAME_CHOICE} tz=${TIMEZONE_CHOICE}"
     echo "  [write] wrapper -> $dest"
 }
 
 set_user_password() {
     echo
     echo "Set password for '${USERNAME_CHOICE}':"
-    nixos-enter --root /mnt -- passwd "${USERNAME_CHOICE}"
+    if ! nixos-enter --root /mnt -- passwd "${USERNAME_CHOICE}"; then
+        echo "  [warn] Could not set password via nixos-enter."
+        echo "  Set it manually after first boot: passwd ${USERNAME_CHOICE}"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -397,8 +405,8 @@ main() {
     nixos-install
     set_user_password
 
-    teardown
     show_summary
+    teardown
 }
 
 main "$@"
