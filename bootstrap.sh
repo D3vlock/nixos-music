@@ -9,6 +9,7 @@ fi
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 USER_NAME="${SUDO_USER:?Run with sudo, not as root directly}"
 USER_HOME="$(getent passwd "$USER_NAME" | cut -d: -f6)"
+USER_GROUP="$(id -gn "$USER_NAME")"
 
 echo "Repo: $REPO_DIR"
 echo "User: $USER_NAME"
@@ -42,7 +43,7 @@ safe_symlink() {
         ln -sf "$src" "$dest"
         echo "  [link] $dest -> $src"
     fi
-    chown -h "$owner:$owner" "$dest" || true
+    chown -h "$owner:$USER_GROUP" "$dest" || true
 }
 
 # --- TPM ---
