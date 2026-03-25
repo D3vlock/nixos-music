@@ -109,5 +109,5 @@ echo "  $USER_HOME/music-session -> $REPO_DIR/scripts/music-session"
 echo
 echo "Next:"
 echo "  reboot"
-echo "  sclang"
-echo "  ghci -ghci-script ~/tidal.hs"
+echo "  music-session        # starts sclang in tmux"
+echo "  nvim music.tidal     # :TidalLaunch to start tidal inside neovim"

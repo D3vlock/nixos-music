@@ -10,7 +10,5 @@ fi
 tmux new-session -d -s "$TIDAL_TMUX_SESSION"
 
 tmux send-keys -t "$TIDAL_TMUX_SESSION" "sclang" C-m
-tmux split-window -h -t "$TIDAL_TMUX_SESSION"
-tmux send-keys -t "$TIDAL_TMUX_SESSION" "tidal" C-m
 
 tmux attach -t "$TIDAL_TMUX_SESSION"
