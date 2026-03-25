@@ -73,6 +73,11 @@ safe_symlink \
     "$USER_HOME/.config/nvim/lua/plugins/navigator.lua" \
     "$USER_NAME"
 
+safe_symlink \
+    "$REPO_DIR/nvim/lua/luarocks.lua" \
+    "$USER_HOME/.config/nvim/lua/plugins/luarocks.lua" \
+    "$USER_NAME"
+
 # --- Symlinks ---
 safe_symlink \
     "$REPO_DIR/supercollider/startup.scd" \
