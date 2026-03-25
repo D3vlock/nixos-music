@@ -42,10 +42,6 @@
     ripgrep
     tmux
     bluez
-    nodejs
-    gcc
-    luarocks
-    lua5_1
     qpwgraph
     qutebrowser
     alsa-utils
@@ -132,7 +128,15 @@
     ];
   };
 
-  programs.neovim.enable = true;
+  programs.neovim = {
+    enable = true;
+    withNodeJs = true;
+    extraPackages = with pkgs; [
+      gcc
+      luarocks
+      lua5_1
+    ];
+  };
 
   programs.sway.enable = true;
   xdg.portal = {
