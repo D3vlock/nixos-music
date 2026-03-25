@@ -31,10 +31,19 @@ s.reboot {
 if(Quarks.isInstalled("SuperDirt").not) {
     "SuperDirt not installed. Installing...".postln;
 
-    // Ensure SC user directories exist (NixOS doesn't create them)
+    // Ensure SC user directories and config file exist (NixOS doesn't create them)
     File.mkdir(Platform.userAppSupportDir);
     File.mkdir(Platform.userAppSupportDir +/+ "downloaded-quarks");
     File.mkdir(Platform.userExtensionDir);
+
+    // sclang needs a config file for Quarks to record include paths.
+    // On NixOS LanguageConfig.currentPath is nil unless one exists.
+    if(LanguageConfig.currentPath.isNil) {
+        var confPath = Platform.userConfigDir +/+ "sclang_conf.yaml";
+        File.mkdir(Platform.userConfigDir);
+        File.use(confPath, "w", { |f| f.write("includePaths: []\nexcludePaths: []\npostInlineWarnings: false\n") });
+        LanguageConfig.store(confPath);
+    };
 
     Quarks.checkForUpdates({
         Quarks.install("SuperDirt", "v1.7.4");
