@@ -43,6 +43,9 @@
     tmux
     bluez
     nodejs
+    gcc
+    luarocks
+    lua5_1
     qpwgraph
     qutebrowser
     alsa-utils
