@@ -12,7 +12,7 @@ tmux new-session -d -s "$TIDAL_TMUX_SESSION"
 tmux send-keys -t "$TIDAL_TMUX_SESSION" "sclang" C-m
 
 tmux split-window -v -t "$TIDAL_TMUX_SESSION" -l 15
-tmux send-keys -t "$TIDAL_TMUX_SESSION" "cava" C-m
+tmux send-keys -t "$TIDAL_TMUX_SESSION" "tidal-vis" C-m
 
 tmux select-pane -t "$TIDAL_TMUX_SESSION:0.0"
 

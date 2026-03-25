@@ -49,7 +49,6 @@
     gnumake
     luarocks
     lua5_1
-    cava
     qpwgraph
     qutebrowser
     alsa-utils
