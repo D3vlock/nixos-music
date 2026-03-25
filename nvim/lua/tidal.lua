@@ -1,3 +1,5 @@
+vim.filetype.add({ extension = { tidal = "tidal" } })
+
 return {
 	{
 		"thgrund/tidal.nvim",
