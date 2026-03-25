@@ -15,8 +15,11 @@
     shell = pkgs.zsh;
   };
 
+  # FHS compatibility for dynamically linked binaries (luarocks, mason, etc.)
+  programs.nix-ld.enable = true;
+
   # security
-  
+
   security.sudo.enable = true;
   security.rtkit.enable = true;
 
@@ -46,7 +49,6 @@
     gnumake
     luarocks
     lua5_1
-    tree-sitter
     qpwgraph
     qutebrowser
     alsa-utils
