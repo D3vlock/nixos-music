@@ -43,6 +43,7 @@
     tmux
     bluez
     gcc
+    gnumake
     luarocks
     lua5_1
     qpwgraph
@@ -58,6 +59,7 @@
 
   environment.sessionVariables = {
     TERM = "foot";
+    CC = "gcc";
   };
 
   environment.shellAliases = {
