@@ -30,6 +30,12 @@ s.reboot {
 
 if(Quarks.isInstalled("SuperDirt").not) {
     "SuperDirt not installed. Installing...".postln;
+
+    // Ensure SC user directories exist (NixOS doesn't create them)
+    File.mkdir(Platform.userAppSupportDir);
+    File.mkdir(Platform.userAppSupportDir +/+ "downloaded-quarks");
+    File.mkdir(Platform.userExtensionDir);
+
     Quarks.checkForUpdates({
         Quarks.install("SuperDirt", "v1.7.4");
         "SuperDirt installed. Recompiling class library now.".postln;
