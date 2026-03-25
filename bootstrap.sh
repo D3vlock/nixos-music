@@ -36,7 +36,10 @@ safe_symlink() {
         echo "  [warn] source does not exist: $src"
         return 1
     fi
-    mkdir -p "$(dirname "$dest")"
+    local destdir
+    destdir="$(dirname "$dest")"
+    mkdir -p "$destdir"
+    chown "$owner:$USER_GROUP" "$destdir"
     if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
         echo "  [skip] symlink already correct: $dest"
     else
