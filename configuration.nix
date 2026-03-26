@@ -59,6 +59,7 @@
         tidal
     ]))
     haskell-language-server
+    lua-language-server
   ];
 
   environment.sessionVariables = {
