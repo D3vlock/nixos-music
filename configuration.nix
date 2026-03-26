@@ -58,6 +58,7 @@
     (haskellPackages.ghcWithPackages (p: with p; [
         tidal
     ]))
+    haskell-language-server
   ];
 
   environment.sessionVariables = {

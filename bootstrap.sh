@@ -83,6 +83,16 @@ safe_symlink \
     "$USER_HOME/.config/nvim/lua/plugins/treesitter.lua" \
     "$USER_NAME"
 
+safe_symlink \
+    "$REPO_DIR/nvim/lua/snippets.lua" \
+    "$USER_HOME/.config/nvim/lua/plugins/snippets.lua" \
+    "$USER_NAME"
+
+safe_symlink \
+    "$REPO_DIR/nvim/lua/lsp.lua" \
+    "$USER_HOME/.config/nvim/lua/plugins/lsp.lua" \
+    "$USER_NAME"
+
 # --- Symlinks ---
 safe_symlink \
     "$REPO_DIR/supercollider/startup.scd" \
