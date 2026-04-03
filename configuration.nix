@@ -1,5 +1,8 @@
 { config, pkgs, lib, ... }:
 
+let
+  supercolliderPkg = pkgs.supercollider-with-sc3-plugins;
+in
 {
   networking.hostName = "tidalartist";
   time.timeZone = "Europe/Brussels";
@@ -53,8 +56,7 @@
     qutebrowser
     alsa-utils
 
-    supercollider
-    supercolliderPlugins.sc3-plugins
+    supercolliderPkg
     (haskellPackages.ghcWithPackages (p: with p; [
         tidal
     ]))
@@ -164,7 +166,7 @@
     after = [ "pipewire.service" "wireplumber.service" ];
     requires = [ "pipewire.service" ];
     serviceConfig = {
-      ExecStart = "${pkgs.supercollider}/bin/sclang";
+      ExecStart = "${supercolliderPkg}/bin/sclang";
       Restart = "on-failure";
       RestartSec = 3;
     };
